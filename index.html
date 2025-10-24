@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Социальная платформа</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background: #f0f2f5;
+            padding: 10px;
+        }
+        
+        .header {
+            background: #1877f2;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            background: #1877f2;
+            color: white;
+        }
+        
+        .create-post {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .file-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .file-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #1877f2;
+            border-radius: 5px;
+            background: white;
+            color: #1877f2;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #1877f2;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .post {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: #1877f2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .post-content {
+            margin-bottom: 10px;
+        }
+        
+        .post-image, .post-video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .post-video {
+            background: #000;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .action {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .comments {
+            margin-top: 10px;
+        }
+        
+        .comment {
+            background: #f0f2f5;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        
+        .add-comment {
+            display: flex;
+            margin-top: 10px;
+        }
+        
+        .add-comment input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 5px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .trending-badge {
+            background: #ff4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Соцсеть</h1>
+        <button onclick="showCreateForm()">Новый пост</button>
+    </div>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showPage('main')">Главная</div>
+        <div class="tab" onclick="showPage('trending')">Популярное</div>
+    </div>
+    
+    <div class="create-post" id="createForm" style="display: none;">
+        <textarea id="postText" placeholder="Что у вас нового?"></textarea>
+        
+        <div class="file-buttons">
+            <div class="file-btn" onclick="document.getElementById('imageInput').click()">
+                📷 Фото
+            </div>
+            <div class="file-btn" onclick="document.getElementById('videoInput').click()">
+                🎥 Видеo
+            </div>
+        </div>
+        
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <input type="file" id="videoInput" accept="video/*" style="display: none;">
+        
+        <div id="mediaPreview" style="margin-bottom: 10px;"></div>
+        
+        <div class="buttons">
+            <button onclick="createPost()">Опубликовать</button>
+            <button onclick="hideCreateForm()" style="background: #666;">Отмена</button>
+        </div>
+    </div>
+    
+    <div id="mainPage" class="page active">
+        <div id="posts"></div>
+    </div>
+    
+    <div id="trendingPage" class="page">
+        <div id="trendingPosts"></div>
+    </div>
+
+    <script>
+        // Данные в памяти
+        let posts = [
+            {
+                id: 1,
+                author: "Админ",
+                text: "Добро пожаловать в нашу социальную сеть!",
+                likes: 15,
+                liked: false,
+                comments: [
+                    {author: "Гость", text: "Отлично!"},
+                    {author: "Друг", text: "Круто!"}
+                ]
+            },
+            {
+                id: 2,
+                author: "Фотограф",
+                text: "Красивый закат сегодня!",
+                likes: 25,
+                liked: false,
+                image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
+                comments: [
+                    {author: "Зритель", text: "Прекрасно!"}
+                ]
+            },
+            {
+                id: 3,
+                author: "Видеоблогер",
+                text: "Новое видео!",
+                likes: 35,
+                liked: false,
+                video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                comments: [
+                    {author: "Фан", text: "Супер!"}
+                ]
+            }
+        ];
+        
+        let currentMedia = null;
+        let currentMediaType = null;
+        
+        // Показ страниц
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(pageName + 'Page').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (pageName === 'trending') {
+                renderTrendingPosts();
+            } else {
+                renderPosts();
+            }
+        }
+        
+        function showCreateForm() {
+            document.getElementById('createForm').style.display = 'block';
+        }
+        
+        function hideCreateForm() {
+            document.getElementById('createForm').style.display = 'none';
+            document.getElementById('postText').value = '';
+            document.getElementById('imageInput').value = '';
+            document.getElementById('videoInput').value = '';
+            document.getElementById('mediaPreview').innerHTML = '';
+            currentMedia = null;
+            currentMediaType = null;
+        }
+        
+        // Обработка выбора файлов
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            handleFileSelect(e, 'image');
+        });
+        
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            handleFileSelect(e, 'video');
+        });
+        
+        function handleFileSelect(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                currentMedia = event.target.result;
+                currentMediaType = type;
+                
+                const preview = document.getElementById('mediaPreview');
+                preview.innerHTML = '';
+                
+                if (type === 'image') {
+                    preview.innerHTML = `<img src="${currentMedia}" style="max-width: 100%; border-radius: 8px;">`;
+                } else {
+                    preview.innerHTML = `<video src="${currentMedia}" controls style="max-width: 100%; border-radius: 8px;"></video>`;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function createPost() {
+            const text = document.getElementById('postText').value;
+            
+            if (!text && !currentMedia) {
+                alert('Напишите текст или добавьте фото/видео');
+                return;
+            }
+            
+            const newPost = {
+                id: Date.now(),
+                author: "Вы",
+                text: text,
+                likes: 0,
+                liked: false,
+                comments: []
+            };
+            
+            if (currentMediaType === 'image') {
+                newPost.image = currentMedia;
+            } else if (currentMediaType === 'video') {
+                newPost.video = currentMedia;
+            }
+            
+            addPost(newPost);
+        }
+        
+        function addPost(post) {
+            posts.unshift(post);
+            renderPosts();
+            hideCreateForm();
+            alert('Пост опубликован!');
+        }
+        
+        function likePost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (post.liked) {
+                post.likes--;
+                post.liked = false;
+            } else {
+                post.likes++;
+                post.liked = true;
+            }
+            renderPosts();
+            renderTrendingPosts();
+        }
+        
+        function addComment(postId, inputElement) {
+            const text = inputElement.value.trim();
+            if (!text) return;
+            
+            const post = posts.find(p => p.id === postId);
+            post.comments.push({
+                author: "Вы",
+                text: text
+            });
+            
+            inputElement.value = '';
+            renderPosts();
+            renderTrendingPosts();
+        }
+        
+        function renderPosts() {
+            const container = document.getElementById('posts');
+            container.innerHTML = '';
+            
+            posts.forEach(post => {
+                container.appendChild(createPostElement(post));
+            });
+        }
+        
+        function renderTrendingPosts() {
+            const container = document.getElementById('trendingPosts');
+            container.innerHTML = '';
+            
+            // Сортируем по лайкам и берем топ-5
+            const trending = [...posts]
+                .sort((a, b) => b.likes - a.likes)
+                .slice(0, 5);
+            
+            if (trending.length === 0) {
+                container.innerHTML = '<div class="post"><p>Пока нет популярных постов</p></div>';
+                return;
+            }
+            
+            trending.forEach(post => {
+                const postElement = createPostElement(post);
+                // Добавляем бейдж "Популярное"
+                const header = postElement.querySelector('.post-header');
+                const badge = document.createElement('span');
+                badge.className = 'trending-badge';
+                badge.textContent = '🔥 Популярное';
+                header.appendChild(badge);
+                
+                container.appendChild(postElement);
+            });
+        }
+        
+        function createPostElement(post) {
+            const postElement = document.createElement('div');
+            postElement.className = 'post';
+            
+            let mediaHtml = '';
+            if (post.image) {
+                mediaHtml = `<img src="${post.image}" class="post-image">`;
+            } else if (post.video) {
+                mediaHtml = `<video src="${post.video}" controls class="post-video"></video>`;
+            }
+            
+            postElement.innerHTML = `
+                <div class="post-header">
+                    <div class="avatar">${post.author.charAt(0)}</div>
+                    <div>
+                        <div style="font-weight: bold;">${post.author}</div>
+                        <div style="font-size: 12px; color: #666;">${getRandomTime()}</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    ${post.text ? `<p>${post.text}</p>` : ''}
+                    ${mediaHtml}
+                </div>
+                <div class="actions">
+                    <div class="action" onclick="likePost(${post.id})">
+                        <span style="color: ${post.liked ? 'red' : '#666'}">❤️</span>
+                        <span>${post.likes}</span>
+                    </div>
+                    <div class="action">💬 ${post.comments.length}</div>
+                </div>
+                <div class="comments">
+                    ${post.comments.map(comment => `
+                        <div class="comment">
+                            <strong>${comment.author}:</strong> ${comment.text}
+                        </div>
+                    `).join('')}
+                    <div class="add-comment">
+                        <input type="text" placeholder="Напишите комментарий..." 
+                               onkeypress="if(event.key=='Enter') addComment(${post.id}, this)">
+                        <button onclick="addComment(${post.id}, this.previousElementSibling)">➤</button>
+                    </div>
+                </div>
+            `;
+            
+            return postElement;
+        }
+        
+        function getRandomTime() {
+            const times = ['Только что', '5 минут назад', 'Час назад', '2 часа назад', 'Сегодня'];
+            return times[Math.floor(Math.random() * times.length)];
+        }
+        
+        // Загружаем посты при старте
+        renderPosts();
+        renderTrendingPosts();
+    </script>
+</body>
+</html>
